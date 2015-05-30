@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using MongoDB.Driver;
 using MongoDB.Bson;
@@ -17,6 +18,8 @@ using Random = UnityEngine.Random;
 
 public class MongoScript : MonoBehaviour
 {
+	public Text list;
+	public Text InputText;
 
 	public class Order
 	{
@@ -56,10 +59,11 @@ public class MongoScript : MonoBehaviour
 	void Start( )
 	{
 
-		string connString = "mongodb://localhost:3001";
+		//string connString = "mongodb://localhost:3001";
+		string connString = "mongodb://175.126.82.238:27017";
 		client = new MongoClient( connString );
 		server = client.GetServer( );
-		server.Connect( );
+		server.Connect( new TimeSpan(3000) );
 		db = server.GetDatabase( "meteor" );
 		oders = db.GetCollection<Order>( "oders" );
 
@@ -68,16 +72,18 @@ public class MongoScript : MonoBehaviour
 		//Post findonePost = posts.FindOne();
 
 		//Debug.Log( findonePost.title );
-
-		foreach( BsonDocument post in cursor ) {
-			foreach( BsonElement val in post ) {
-				if( !val.Value.IsBsonNull )
-				{
-					Debug.Log( val.Name + "::" + val.Value.ToString() );
-				}
-			}
-		}
+		//list.text = "";
+		//foreach( BsonDocument post in cursor ) {
+		//	foreach( BsonElement val in post ) {
+		//		if( !val.Value.IsBsonNull )
+		//		{
+		//			Debug.Log( val.Name + "::" + val.Value.ToString() );
+		//		}
+		//	}
+		//	list.text += post.GetElement("title").Value.AsString;
+		//}
 		
+		Refresh();
 
 		var document = new BsonDocument
 		{
@@ -127,6 +133,34 @@ public class MongoScript : MonoBehaviour
 	// Update is called once per frame
 	void Update( )
 	{
-		gameObject.transform.position += ( DestPos - gameObject.transform.position ) * ( Time.deltaTime );
+		//gameObject.transform.position += ( DestPos - gameObject.transform.position ) * ( Time.deltaTime );
+	}
+
+	public void Insert()
+	{
+		if( InputText.text.Length <= 0 )
+		{
+			return;
+		}
+
+		BsonDocument doc = new BsonDocument 
+		{
+			{ "title", InputText.text }
+		};
+
+		posts.Insert( doc );
+	}
+
+	public void Refresh()
+	{
+		MongoCursor<BsonDocument> cursor = posts.FindAll( );
+		list.text = "";
+		foreach( BsonDocument post in cursor )
+		{
+			BsonValue val;
+			
+			if( post.TryGetValue( "title", out val ) )
+				list.text += val.AsString + "\n";
+		}
 	}
 }
